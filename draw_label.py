@@ -7,6 +7,8 @@ class_int = 2 #choose class that you are about to select on image
 image_path = "training/dataset/images/pieces02.jpg"
 label_path = "training/dataset/labels/pieces02.txt"
 
+#then run file, on the first image select two corners for each rectangle (last rectangle not working, to be fixed), second image shows labels
+
 def click_event(event, x, y, flags, params):
    
     if event == cv2.EVENT_LBUTTONDOWN:
