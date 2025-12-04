@@ -19,6 +19,7 @@ wstep = 10
 param.update({'font.size': 7})
 #board plot
 
+
 def board(radius, origin, step, width, wstep):
     fig = plt.figure()
     ax = fig.add_subplot(111, aspect='equal')
@@ -102,8 +103,9 @@ def board(radius, origin, step, width, wstep):
                 corners.append((beg_line[i][0]+ step[0],beg_line[i][1]) )
         corners.append((end_line[i][0],end_line[i][1]))
 
-        
-        
+    #order corners by ascending x
+    corners.sort(key = lambda elt: elt[1])
+    corners.sort(key = lambda elt: elt[0])        
     #draw a grey circle at each intersection
     i = 0
     for corn in corners :
