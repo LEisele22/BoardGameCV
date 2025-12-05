@@ -86,13 +86,13 @@ def draw_boxes(image, bboxes, labels, class_names):
                     cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0,255,0), 2)
 
     return image
+ 
 
-
-for i in range(15,16):
-    class_names = ['Board', 'Whitefigure', 'Blackfigure', 'Emptyslot']
-    class_int = 2 #choose class that you are about to select on image
-    image_path = f"training/dataset/images/pieces{i}.jpg"
-    label_path = f"training/dataset/labels/pieces{i}.txt"
+def label(class_names, image_path, label_path):
+    # class_names = ['Board', 'Whitefigure', 'Blackfigure', 'Emptyslot']
+    # class_int = 2 #choose class that you are about to select on image
+    # image_path = f"training/dataset/images/pieces{i}.jpg"
+    # label_path = f"training/dataset/labels/pieces{i}.txt"
     resize= True
     in_count = 0
     in_points = []
@@ -169,7 +169,10 @@ for i in range(15,16):
     cv2.destroyAllWindows()
 
 
-#display labels
+label(class_int, class_names, image_path, label_path)
+
+
+##display labels
 
 def test_yolo_label(image_path, label_path, class_names):
     image = cv2.imread(image_path)
