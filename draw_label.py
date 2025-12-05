@@ -4,19 +4,25 @@ import numpy as np
 #to change : 
 class_names = ['Board', 'Whitefigure', 'Blackfigure', 'Emptyslot']
 class_int = 2 #choose class that you are about to select on image
-image_path = "training/dataset/images/pieces02.jpg"
-label_path = "training/dataset/labels/pieces02.txt"
+image_path = "training/dataset/images/pieces15.jpg"
+label_path = "training/dataset/labels/pieces15.txt"
+resize= True
+#then run file, on the first image select two corners for each rectangle, second image shows labels
+#press q to exit first image
 
-#then run file, on the first image select two corners for each rectangle (last rectangle not working, to be fixed), second image shows labels
+# for i in range(13, 30):
+#     label_path = f"training/dataset/labels/pieces{i}.txt"
+#     file = open(label_path, mode = "x")
+#     file.close()
 
 def click_event(event, x, y, flags, params):
    
     if event == cv2.EVENT_LBUTTONDOWN:
         print(f'({x},{y})')
 
-        # put coordinates as text on the image
-        cv2.putText(im, f'({x},{y})',(x,y),
-        cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+        # # put coordinates as text on the image
+        # cv2.putText(im, f'({x},{y})',(x,y),
+        # cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
         
         # draw point on the image
         cv2.circle(im, (x,y), 3, (0,255,255), -1)
@@ -35,9 +41,9 @@ def get_coord_rect(points):
     return center1, center2, width, height
 
 
-def format_label(points, class_int, sizeim):
-    file = open(label_path, mode = "a")
-    for i in range(0,len(points)-2,2):
+def format_label(points, class_int, sizeim, rwx):
+    file = open(label_path, mode = rwx)
+    for i in range(0,len(points)-1,2):
         xc,yc,w,h = get_coord_rect(points[i:i+2])
         xc  = xc /sizeim[1]
         w = w/sizeim[1]
@@ -82,35 +88,93 @@ def draw_boxes(image, bboxes, labels, class_names):
     return image
 
 
+for i in range(15,16):
+    class_names = ['Board', 'Whitefigure', 'Blackfigure', 'Emptyslot']
+    class_int = 2 #choose class that you are about to select on image
+    image_path = f"training/dataset/images/pieces{i}.jpg"
+    label_path = f"training/dataset/labels/pieces{i}.txt"
+    resize= True
+    in_count = 0
+    in_points = []
+
+    im = cv2.imread(image_path)
+    if resize : 
+        im = cv2.resize(im, None, fx = 0.4, fy = 0.4)
+    size = np.shape(im)
+
+    title = f"select class {class_names[class_int]}"
+    cv2.namedWindow(title)
+    cv2.setMouseCallback(title, click_event, in_points)
+    while True:
+        cv2.imshow(title,im)
+        k = cv2.waitKey(1) & 0xFF
+        if k == 113:
+            break
+    format_label(in_points, class_int, size,'a')
+    cv2.destroyAllWindows()
+
+
+    # select white pieces
+    class_int = 1 #choose class that you are about to select on image
+
+    in_count = 0
+    in_points = []
+
+    im = cv2.imread(image_path)
+    if resize :
+        im = cv2.resize(im, None, fx = 0.4, fy = 0.4)
+    size = np.shape(im)
+
+
+    title = f"select class {class_names[class_int]}"
+    cv2.namedWindow(title)
+    cv2.setMouseCallback(title, click_event, in_points)
+    while True:
+        cv2.imshow(title,im)
+        k = cv2.waitKey(1) & 0xFF
+        if k == 113:
+            break
+    format_label(in_points, class_int, size, 'a')
+    cv2.destroyAllWindows()
 
 
 
 
+    # select empty spaces
 
 
-in_count = 0
-in_points = []
+    # image_path = "training/dataset/images/pieces11.webp"
+    # label_path = "training/dataset/labels/pieces11.txt"
+    # resize= False
+    class_int = 3 #choose class that you are about to select on image
 
-im = cv2.imread(image_path)
-im = cv2.resize(im, None, fx = 0.4, fy = 0.4)
-size = np.shape(im)
+    in_count = 0
+    in_points = []
 
-
-cv2.namedWindow('Label Test')
-cv2.setMouseCallback('Label Test', click_event, in_points)
-while True:
-   cv2.imshow('Label Test',im)
-   k = cv2.waitKey(1) & 0xFF
-   if k == 113:
-      break
-format_label(in_points, class_int, size)
-cv2.destroyAllWindows()
+    im = cv2.imread(image_path)
+    if resize :
+        im = cv2.resize(im, None, fx = 0.4, fy = 0.4)
+    size = np.shape(im)
 
 
+    title = f"select class {class_names[class_int]}"
+    cv2.namedWindow(title)
+    cv2.setMouseCallback(title, click_event, in_points)
+    while True:
+        cv2.imshow(title,im)
+        k = cv2.waitKey(1) & 0xFF
+        if k == 113:
+            break
+    format_label(in_points, class_int, size, 'a')
+    cv2.destroyAllWindows()
+
+
+#display labels
 
 def test_yolo_label(image_path, label_path, class_names):
     image = cv2.imread(image_path)
-    image = cv2.resize(image, None, fx = 0.4, fy = 0.4)
+    if resize :
+        image = cv2.resize(image, None, fx = 0.4, fy = 0.4)
 
     bboxes = []
     labels = []
@@ -122,6 +186,7 @@ def test_yolo_label(image_path, label_path, class_names):
             x_c, y_c, w, h = map(float, parts[1:])
             bboxes.append([x_c, y_c, w, h])
             labels.append(label)
+        
 
     result = draw_boxes(image.copy(), bboxes, labels, class_names)
 
