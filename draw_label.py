@@ -25,7 +25,7 @@ def click_event(event, x, y, flags, params):
         # cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
         
         # draw point on the image
-        cv2.circle(im, (x,y), 3, (0,255,255), -1)
+        cv2.circle(im, (x,y), 3, (0,0,255), -1)
         params.append((x,y))
 
 
@@ -94,82 +94,29 @@ def label(class_names, image_path, label_path):
     # image_path = f"training/dataset/images/pieces{i}.jpg"
     # label_path = f"training/dataset/labels/pieces{i}.txt"
     resize= True
-    in_count = 0
-    in_points = []
 
-    im = cv2.imread(image_path)
-    if resize : 
-        im = cv2.resize(im, None, fx = 0.4, fy = 0.4)
-    size = np.shape(im)
+    for i in range(len(class_names)):
+        in_count = 0
+        in_points = []
 
-    title = f"select class {class_names[class_int]}"
-    cv2.namedWindow(title)
-    cv2.setMouseCallback(title, click_event, in_points)
-    while True:
-        cv2.imshow(title,im)
-        k = cv2.waitKey(1) & 0xFF
-        if k == 113:
-            break
-    format_label(in_points, class_int, size,'a')
-    cv2.destroyAllWindows()
+        im = cv2.imread(image_path)
+        if resize : 
+            im = cv2.resize(im, None, fx = 0.4, fy = 0.4)
+        size = np.shape(im)
 
-
-    # select white pieces
-    class_int = 1 #choose class that you are about to select on image
-
-    in_count = 0
-    in_points = []
-
-    im = cv2.imread(image_path)
-    if resize :
-        im = cv2.resize(im, None, fx = 0.4, fy = 0.4)
-    size = np.shape(im)
+        title = f"select class {class_names[i]}"
+        cv2.namedWindow(title)
+        cv2.setMouseCallback(title, click_event, in_points)
+        while True:
+            cv2.imshow(title,im)
+            k = cv2.waitKey(1) & 0xFF
+            if k == 113:
+                break
+        format_label(in_points, i, size,'a')
+        cv2.destroyAllWindows()
 
 
-    title = f"select class {class_names[class_int]}"
-    cv2.namedWindow(title)
-    cv2.setMouseCallback(title, click_event, in_points)
-    while True:
-        cv2.imshow(title,im)
-        k = cv2.waitKey(1) & 0xFF
-        if k == 113:
-            break
-    format_label(in_points, class_int, size, 'a')
-    cv2.destroyAllWindows()
-
-
-
-
-    # select empty spaces
-
-
-    # image_path = "training/dataset/images/pieces11.webp"
-    # label_path = "training/dataset/labels/pieces11.txt"
-    # resize= False
-    class_int = 3 #choose class that you are about to select on image
-
-    in_count = 0
-    in_points = []
-
-    im = cv2.imread(image_path)
-    if resize :
-        im = cv2.resize(im, None, fx = 0.4, fy = 0.4)
-    size = np.shape(im)
-
-
-    title = f"select class {class_names[class_int]}"
-    cv2.namedWindow(title)
-    cv2.setMouseCallback(title, click_event, in_points)
-    while True:
-        cv2.imshow(title,im)
-        k = cv2.waitKey(1) & 0xFF
-        if k == 113:
-            break
-    format_label(in_points, class_int, size, 'a')
-    cv2.destroyAllWindows()
-
-
-label(class_int, class_names, image_path, label_path)
+label(class_names, image_path, label_path)
 
 
 ##display labels
