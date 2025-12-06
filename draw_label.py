@@ -7,7 +7,7 @@ image_path = "training/dataset/images/pieces15.jpg"
 label_path = "training/dataset/labels/pieces15.txt"
 resize= True
 #then run file, on the first image select two corners for each rectangle, second image shows labels
-#press q to exit window and go to next class
+#press q to exit window and it goes to next class
 
 
 #use these lines to create the .txt files if needed
@@ -116,11 +116,7 @@ def draw_boxes(image, bboxes, labels, class_names):
  
 
 
-for i in range(16,30):
-    class_names = ['Board', 'Whitefigure', 'Blackfigure', 'Emptyslot']
-    image_path = f"training/dataset/images/pieces{i}.jpg"
-    label_path = f"training/dataset/labels/pieces{i}.txt"
-    resize= True
+for i in range(len(class_names)):
     in_points = []
 
     im = cv2.imread(image_path)
@@ -128,7 +124,7 @@ for i in range(16,30):
         im = cv2.resize(im, None, fx = 0.4, fy = 0.4)
     size = np.shape(im)
 
-    title = f"select class {class_names[0]}"
+    title = f"select class {class_names[i]}"
     cv2.namedWindow(title)
     cv2.setMouseCallback(title, click_event, in_points)
     while True:
@@ -136,7 +132,7 @@ for i in range(16,30):
         k = cv2.waitKey(30)
         if k == 113:
             break
-    format_label(in_points, 0, size,'a')
+    format_label(in_points, i, size,'a')
     cv2.destroyAllWindows()
     test_yolo_label(image_path,label_path, class_names)
 
