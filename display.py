@@ -141,13 +141,13 @@ def save_state(filename, w_pieces, b_pieces, step):
         file = open(filename, mode = 'a' )
     if len(w_pieces) == 0 :
         if  len(b_pieces) == 0 : 
-            line = str(step) + ' ' + 'empty' + ' ' + 'empty' + '\n'
+            line = str(step) + ';' + 'empty' + ';' + 'empty' + '\n'
         else :   
-            line = str(step) + ' ' + 'empty' + ' ' + str(b_pieces) + '\n'
+            line = str(step) + ';' + 'empty' + ';' + str(b_pieces) + '\n'
     if len(b_pieces) == 0 :
-         line = str(step) + ' ' + str(w_pieces) + ' '+ 'empty' + '\n'
+         line = str(step) + ';' + str(w_pieces) + ';'+ 'empty' + '\n'
     else :
-        line = str(step) + ' ' + str(w_pieces) + ' ' + str(b_pieces) + '\n'
+        line = str(step) + ';' + str(w_pieces) + ';' + str(b_pieces) + '\n'
         
     file.write(line)
     file.close()
@@ -155,8 +155,9 @@ def save_state(filename, w_pieces, b_pieces, step):
 def extract_state(filename, step):
     file = open(filename, 'r')
     lines = file.read()
+    lines.split()
     lines = lines.splitlines()
-    step, w_pieces, b_pieces = lines[step].split(' ')
+    step, w_pieces, b_pieces = lines[step].split(';')
     if w_pieces == 'empty':
         w_pieces = []
     if b_pieces == 'empty':
@@ -169,6 +170,7 @@ def extract_state(filename, step):
 # add_pieces(axes, corner, w_pieces, b_pieces)
 # save_state('games/game01.txt', w_pieces, b_pieces, 0)
 w_pieces, b_pieces = extract_state('games/game01.txt',0)
-axes, corner = board(radius, origin, step, width, wstep)
-add_pieces(axes, corner, w_pieces, b_pieces)
+print(w_pieces, b_pieces)
+# axes, corner = board(radius, origin, step, width, wstep)
+# add_pieces(axes, corner, w_pieces, b_pieces)
 plt.close('all')
