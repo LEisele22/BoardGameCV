@@ -104,8 +104,8 @@ def board(radius, origin, step, width, wstep):
         corners.append((end_line[i][0],end_line[i][1]))
 
     #order corners by ascending x
-    corners.sort(key = lambda elt: elt[1])
-    corners.sort(key = lambda elt: elt[0])        
+    corners.sort(key = lambda elt: elt[0])
+    corners.sort(key = lambda elt: elt[1], reverse=True)        
     #draw a grey circle at each intersection
     i = 0
     for corn in corners :
@@ -140,3 +140,4 @@ w_pieces = [1,7,15]
 b_pieces = [3,4,14]
 axes, corner = board(radius, origin, step, width, wstep)
 add_pieces(axes, corner, w_pieces, b_pieces)
+plt.close('all')
