@@ -3,8 +3,8 @@ import numpy as np
 
 #to change : 
 class_names = ['Board', 'Whitefigure', 'Blackfigure', 'Emptyslot']
-image_path = "training/dataset/images/board06.jpg"
-label_path = "training/dataset/labels/board06.txt"
+image_path = "training/dataset/valid/images/test03.jpg"
+label_path = "training/dataset/valid/labels/test03.txt"
 resize= True
 #then run file, on the first image select two corners for each rectangle, second image shows labels
 #press q to exit window and go to next class
