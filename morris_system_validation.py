@@ -25,7 +25,7 @@ def main_single_image(image_path):
     outer_rect, edges = detect_outer_paper_rect(frame)
     if outer_rect is None:
         print("Could not detect board outline.")
-        return
+        return 0
 
     # --- Rectify to square ---
     rect, H = rectify_to_square(frame, outer_rect)
@@ -34,7 +34,7 @@ def main_single_image(image_path):
     nodes = detect_nodes(rect)
     if len(nodes) != EXPECT:
         print(f"Detected {len(nodes)} nodes, expected 24.")
-        return
+        return len(nodes)
 
     # Sort nodes into fixed Morris ordering
     full_nodes = sort_nodes_morris_grid(nodes)
@@ -62,15 +62,20 @@ def main_single_image(image_path):
     print("Black pieces:", b_pieces)
 
     # Show debugging windows
-    cv2.imshow("Original", frame)
-    cv2.imshow("Edges", edges)
-    cv2.imshow("Rectified", rect)
-    cv2.imshow("Rectified + Graph + Stones", rect_graph)
+    # cv2.imshow("Original", frame)
+    # cv2.imshow("Edges", edges)
+    # cv2.imshow("Rectified", rect)
+    # cv2.imshow("Rectified + Graph + Stones", rect_graph)
 
-    cv2.waitKey(0)
+    # cv2.waitKey(0)
     cv2.destroyAllWindows()
+    return len(nodes)
 
 
 if __name__ == "__main__":
+    acc = 0
+    for i in range(26,51):
     # Change this path as needed
-    main_single_image(r"C:\Users\mojo\Desktop\computervision\BoardGameCV\IMG-20251207-WA0034.jpg")
+        nodes = main_single_image(f"metrics/images/IMG-20251207-WA00{i}.jpg")
+        acc += nodes/24
+    print(acc/25)

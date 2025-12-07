@@ -1,0 +1,6 @@
+on black background :   
+    accuracy for detecting the nodes : 0.896
+    accuracy for detecting outlines of the board : 0.9
+
+on random background : 
+    accuracy for detecting the nodes : 0.63
