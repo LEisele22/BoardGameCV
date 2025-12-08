@@ -7,7 +7,7 @@ image_path = "training/dataset/valid/images/test04.jpg"
 label_path = "training/dataset/valid/labels/test04.txt"
 resize= True
 #then run file, on the first image select two corners for each rectangle, second image shows labels
-#press q to exit window and go to next class
+#press q to exit window and it goes to next class
 
 
 #use these lines to create the .txt files if needed
@@ -15,6 +15,32 @@ resize= True
 #     label_path = f"training/dataset/labels/pieces{i}.txt"
 #     file = open(label_path, mode = "x")
 #     file.close()
+
+
+def test_yolo_label(image_path, label_path, class_names):
+    image = cv2.imread(image_path)
+    if resize :
+        image = cv2.resize(image, None, fx = 0.4, fy = 0.4)
+
+    bboxes = []
+    labels = []
+
+    with open(label_path, "r") as f:
+        for line in f:
+            parts = line.strip().split()
+            label = int(parts[0])
+            x_c, y_c, w, h = map(float, parts[1:])
+            bboxes.append([x_c, y_c, w, h])
+            labels.append(label)
+        
+
+    result = draw_boxes(image.copy(), bboxes, labels, class_names)
+
+    cv2.imshow("Label Test", result)
+    cv2.waitKey(0)
+
+
+
 
 def click_event(event, x, y, flags, params):
    
@@ -103,39 +129,16 @@ for i in range(len(class_names)):
     cv2.setMouseCallback(title, click_event, in_points)
     while True:
         cv2.imshow(title,im)
-        k = cv2.waitKey(1) & 0xFF
+        k = cv2.waitKey(30)
         if k == 113:
             break
     format_label(in_points, i, size,'a')
     cv2.destroyAllWindows()
+    test_yolo_label(image_path,label_path, class_names)
 
 
 
 ##display labels
-
-def test_yolo_label(image_path, label_path, class_names):
-    image = cv2.imread(image_path)
-    if resize :
-        image = cv2.resize(image, None, fx = 0.4, fy = 0.4)
-
-    bboxes = []
-    labels = []
-
-    with open(label_path, "r") as f:
-        for line in f:
-            parts = line.strip().split()
-            label = int(parts[0])
-            x_c, y_c, w, h = map(float, parts[1:])
-            bboxes.append([x_c, y_c, w, h])
-            labels.append(label)
-        
-
-    result = draw_boxes(image.copy(), bboxes, labels, class_names)
-
-    cv2.imshow("Label Test", result)
-    cv2.waitKey(0)
-
-
 
 
 test_yolo_label(

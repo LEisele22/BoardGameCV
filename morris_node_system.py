@@ -1,6 +1,8 @@
 import cv2
 import numpy as np
 import math
+from display import board, add_pieces
+
 
 # =========================
 # Basic geometry helpers
@@ -13,45 +15,39 @@ def classify_stone(patch):
     if patch.size == 0:
         return "empty"
 
-    Z = patch.reshape(-1,3).astype(np.float32)
-
-    # kmeans for background vs object
-    K = 2
-    criteria = (cv2.TERM_CRITERIA_EPS+cv2.TERM_CRITERIA_MAX_ITER, 15, 1)
-    _, labels, centers = cv2.kmeans(Z, K, None, criteria, 3, cv2.KMEANS_PP_CENTERS)
-
-    c0, c1 = centers
-    b0 = np.mean(c0)  # brightness
-    b1 = np.mean(c1)
-
-    darker = 0 if b0 < b1 else 1
-    darker_fraction = np.mean(labels == darker)
-
-    if darker_fraction < 0.10:
-        return "empty"
-    return "stone"
-
-def stone_color(patch):
     gray = cv2.cvtColor(patch, cv2.COLOR_BGR2GRAY)
-    m = np.mean(gray)
 
-    # adjust threshold based on your lighting
-    return "black" if m < 120 else "white"
+    # Count proportions
+    dark = np.mean(gray < 50)       # dark pixel ratio
+    bright = np.mean(gray > 200)    # bright pixel ratio
+
+    # Black stone: lots of dark pixels
+    if dark > 0.25:
+        return "black"
+
+    # White stone: large bright region AND no dark pixels
+    if bright > 0.60 and dark < 0.05:
+        return "white"
+
+    # Empty node: tiny black dot + white area
+    if 0.01 < dark < 0.10:
+        return "empty"
+
+    # Fallback (likely empty)
+    return "empty"
+
+
+
 
 def detect_all_stones(rectified, full_nodes):
     states = []
 
-    for (x,y) in full_nodes:
-        patch = sample_patch(rectified, (x,y))
-        status = classify_stone(patch)
-
-        if status == "empty":
-            states.append("empty")
-        else:
-            states.append(stone_color(patch))
+    for (x, y) in full_nodes:
+        patch = sample_patch(rectified, (x, y))
+        state = classify_stone(patch)  # "black", "white", or "empty"
+        states.append(state)
 
     return states
-
 def sort_nodes_morris_grid(nodes):
     row_sizes = [3,3,3,6,3,3,3]  # THIS is your layout
     
@@ -291,11 +287,22 @@ def main():
                         cv2.circle(rect_graph, (int(x),int(y)), 6, (0,255,0), 2)
 
                 cv2.imshow("Rectified + graph + stones", rect_graph)
+                w_pieces = [i for i,s in enumerate(stone_states) if s == "white"]
+                b_pieces = [i for i,s in enumerate(stone_states) if s == "black"]
+                
+                print("White pieces:", w_pieces)
+                print("Black pieces:", b_pieces)
             else:
                 print("Detected", len(nodes), "nodes (expected 24).")
 
         cv2.imshow("Live", disp)
         cv2.imshow("Edges", edges)
+        key = cv2.waitKey(1) & 0xFF
+        
+        if key == ord('p'):
+            print("Opening matplotlib board…")    
+            ax, corners = board(1, (0,0), (5,5), 50, 10)
+            add_pieces(ax, corners, w_pieces, b_pieces)
 
         if cv2.waitKey(1) & 0xFF == 27:
             break

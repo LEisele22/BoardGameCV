@@ -104,8 +104,8 @@ def board(radius, origin, step, width, wstep):
         corners.append((end_line[i][0],end_line[i][1]))
 
     #order corners by ascending x
-    corners.sort(key = lambda elt: elt[1])
-    corners.sort(key = lambda elt: elt[0])        
+    corners.sort(key = lambda elt: elt[0])
+    corners.sort(key = lambda elt: elt[1], reverse=True)        
     #draw a grey circle at each intersection
     i = 0
     for corn in corners :
@@ -132,11 +132,45 @@ def add_pieces(ax, corners, w_pieces, b_pieces):
     ax.get_yaxis().set_visible(False)
     plt.axis('scaled')    
     plt.show()    
+
+
+def save_state(filename, w_pieces, b_pieces, step):
+    try :
+        file = open(filename, mode = 'x')
+    except FileExistsError :
+        file = open(filename, mode = 'a' )
+    if len(w_pieces) == 0 :
+        if  len(b_pieces) == 0 : 
+            line = str(step) + ';' + 'empty' + ';' + 'empty' + '\n'
+        else :   
+            line = str(step) + ';' + 'empty' + ';' + str(b_pieces) + '\n'
+    if len(b_pieces) == 0 :
+         line = str(step) + ';' + str(w_pieces) + ';'+ 'empty' + '\n'
+    else :
+        line = str(step) + ';' + str(w_pieces) + ';' + str(b_pieces) + '\n'
+        
+    file.write(line)
+    file.close()
     
+def extract_state(filename, step):
+    file = open(filename, 'r')
+    lines = file.read()
+    lines.split()
+    lines = lines.splitlines()
+    step, w_pieces, b_pieces = lines[step].split(';')
+    if w_pieces == 'empty':
+        w_pieces = []
+    if b_pieces == 'empty':
+        b_pieces = []
+    return w_pieces, b_pieces
     
-    
-    
-w_pieces = [1,7,15]
-b_pieces = [3,4,14]
-axes, corner = board(radius, origin, step, width, wstep)
-add_pieces(axes, corner, w_pieces, b_pieces)
+# w_pieces = [1,7,15]
+# b_pieces = [3,4,14]
+# axes, corner = board(radius, origin, step, width, wstep)
+# add_pieces(axes, corner, w_pieces, b_pieces)
+# save_state('games/game01.txt', w_pieces, b_pieces, 0)
+w_pieces, b_pieces = extract_state('games/game01.txt',0)
+print(w_pieces, b_pieces)
+# axes, corner = board(radius, origin, step, width, wstep)
+# add_pieces(axes, corner, w_pieces, b_pieces)
+plt.close('all')

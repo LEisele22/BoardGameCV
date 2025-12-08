@@ -1,0 +1,10 @@
+on black background :   
+    accuracy for detecting the nodes : 0.896
+    accuracy for detecting outlines of the board : 0.9
+
+on random background : 
+    accuracy for detecting outlines of the board : 0.92
+    accuracy for detecting the nodes : 0.63 (nodes detected/total number of nodes)
+    precision for detecting empty nodes : 0.56 (nodes that are considered empty/ all detected nodes)
+    recall for detecting empty nodes : 0.355 (nodes that are considered empty/all empty nodes)
+    F1 score : 0.49
