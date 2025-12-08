@@ -118,7 +118,7 @@ def draw_boxes(image, bboxes, labels, class_names):
     return image
  
 
-for i in range(31,56):
+for i in range(56,68):
     # class_names = ['Board', 'Whitefigure', 'Blackfigure', 'Emptyslot']
     image_path = f"training/dataset/train/images/pieces{i}.jpg"
     label_path = f"training/dataset/train/labels/pieces{i}.txt"
