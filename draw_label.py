@@ -107,18 +107,18 @@ def draw_boxes(image, bboxes, labels, class_names):
     for box, label in zip(bboxes, labels):
         x1, y1, x2, y2 = yolo_to_xyxy(box, img_w, img_h)
         class_name = class_names[int(label)]
-        color = (70*int(label),255,70*(3-int(label)))
+        color = (70*int(label),0,70*(3-int(label)))
         # Rectangle
         cv2.rectangle(image, (x1, y1), (x2, y2), color, 2)
 
         # Label
         cv2.putText(image, class_name, (x1, y1 - 5),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0,255,0), 2)
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, color, 2)
 
     return image
  
 
-for i in range(30,31):
+for i in range(31,56):
     # class_names = ['Board', 'Whitefigure', 'Blackfigure', 'Emptyslot']
     image_path = f"training/dataset/train/images/pieces{i}.jpg"
     label_path = f"training/dataset/train/labels/pieces{i}.txt"
