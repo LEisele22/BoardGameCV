@@ -25,7 +25,7 @@ def main_single_image(image_path):
     outer_rect, edges = detect_outer_paper_rect(frame)
     if outer_rect is None:
         print("Could not detect board outline.")
-        return 0
+        return 0,None, None
 
     # --- Rectify to square ---
     rect, H = rectify_to_square(frame, outer_rect)
@@ -34,7 +34,7 @@ def main_single_image(image_path):
     nodes = detect_nodes(rect)
     if len(nodes) != EXPECT:
         print(f"Detected {len(nodes)} nodes, expected 24.")
-        return len(nodes)
+        return len(nodes), None, None
 
     # Sort nodes into fixed Morris ordering
     full_nodes = sort_nodes_morris_grid(nodes)
@@ -69,13 +69,28 @@ def main_single_image(image_path):
 
     # cv2.waitKey(0)
     cv2.destroyAllWindows()
-    return len(nodes)
+    return len(nodes), w_pieces, b_pieces
 
 
 if __name__ == "__main__":
     acc = 0
+    prec = 0
+    board = 0
+    rec = 0
     for i in range(26,51):
     # Change this path as needed
-        nodes = main_single_image(f"metrics/images/IMG-20251207-WA00{i}.jpg")
+        nodes, w_pieces, b_pieces= main_single_image(f"metrics/images/IMG-20251207-WA00{i}.jpg")
         acc += nodes/24
-    print(acc/25)
+        if not w_pieces == None :
+            prec += 24 - len(w_pieces) - len(b_pieces) #numbers of empty nodes detected
+            # board += 24
+        board += nodes
+        rec += 24
+
+    print('accuracy = ', acc/(rec/24))
+    print('precision for empty nodes= ', prec/board)
+    print('recall for empty nodes= ', prec/rec)
+
+    
+
+
