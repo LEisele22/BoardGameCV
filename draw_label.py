@@ -3,8 +3,8 @@ import numpy as np
 
 #to change : 
 class_names = ['Board', 'Whitefigure', 'Blackfigure', 'Emptyslot']
-image_path = "training/dataset/images/board06.jpg"
-label_path = "training/dataset/labels/board06.txt"
+image_path = "training/dataset/images/pieces15.jpg"
+label_path = "training/dataset/labels/pieces15.txt"
 resize= True
 #then run file, on the first image select two corners for each rectangle, second image shows labels
 #press q to exit window and it goes to next class
@@ -68,8 +68,11 @@ def get_coord_rect(points):
     return center1, center2, width, height
 
 
-def format_label(points, class_int, sizeim, rwx):
-    file = open(label_path, mode = rwx)
+def format_label(points, class_int, sizeim):
+    try :
+        file = open(label_path, mode = 'x')
+    except FileExistsError :
+        file = open(label_path, mode = 'a')
     for i in range(0,len(points)-1,2):
         xc,yc,w,h = get_coord_rect(points[i:i+2])
         xc  = xc /sizeim[1]
@@ -115,26 +118,30 @@ def draw_boxes(image, bboxes, labels, class_names):
     return image
  
 
+for i in range(30,31):
+    # class_names = ['Board', 'Whitefigure', 'Blackfigure', 'Emptyslot']
+    image_path = f"training/dataset/train/images/pieces{i}.jpg"
+    label_path = f"training/dataset/train/labels/pieces{i}.txt"
+    resize= True
+    for i in range(len(class_names)):
+        in_points = []
 
-for i in range(len(class_names)):
-    in_points = []
+        im = cv2.imread(image_path)
+        if resize : 
+            im = cv2.resize(im, None, fx = 0.4, fy = 0.4)
+        size = np.shape(im)
 
-    im = cv2.imread(image_path)
-    if resize : 
-        im = cv2.resize(im, None, fx = 0.4, fy = 0.4)
-    size = np.shape(im)
-
-    title = f"select class {class_names[i]}"
-    cv2.namedWindow(title)
-    cv2.setMouseCallback(title, click_event, in_points)
-    while True:
-        cv2.imshow(title,im)
-        k = cv2.waitKey(30)
-        if k == 113:
-            break
-    format_label(in_points, i, size,'a')
-    cv2.destroyAllWindows()
-    test_yolo_label(image_path,label_path, class_names)
+        title = f"select class {class_names[i]}"
+        cv2.namedWindow(title)
+        cv2.setMouseCallback(title, click_event, in_points)
+        while True:
+            cv2.imshow(title,im)
+            k = cv2.waitKey(30)
+            if k == 113:
+                break
+        format_label(in_points, i, size)
+        cv2.destroyAllWindows()
+        # test_yolo_label(image_path,label_path, class_names)
 
 
 
