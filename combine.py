@@ -13,8 +13,9 @@ from onnxtest import nms, load_model, preprocess
 
 ##Image and variables
 
-image_path = "metrics/images/IMG-20251207-WA0046.jpg"
-rect_path = "metrics/images/rect46.jpg"
+image_path = "metrics/images/IMG-20251207-WA0041.jpg"
+rect_path = "metrics/images/rect41.jpg"
+res_path = "metrics/labels/rect41.txt"
 model = "models/best.onnx"
 CLASSES = ['board', 'whitefigure', 'blackfigure', 'emptyspot']
 INPUT_SIZE = 640  # same as training
@@ -23,7 +24,7 @@ IOU_THRESHOLD = 0.45
 
 class_names = ['Board', 'Whitefigure', 'Blackfigure', 'Emptyslot']
 
-res_path = "metrics/labels/rect46.txt"
+
 ## detecting board
 
 
@@ -187,17 +188,17 @@ def filter_nodes_class(res_path, im):
         if j not in indlist : 
             lab = lablist[j]
             x1, y1, x2, y2 = lab[1:5]
-            x_c_ref = (x2-x1)/(2)
-            y_c_ref = (y2-y1)/(2)
+            x_c_ref = (x2+x1)/(2)
+            y_c_ref = (y2+y1)/(2)
             for i in range(len(lablist)) :
                 if i not in indlist :
                     elt = lablist[i]
                     x1, y1, x2, y2 = elt[1:5]
-                    x_c = (x2-x1)/(2)
-                    y_c = (y2-y1)/(2)
+                    x_c = (x2+x1)/(2)
+                    y_c = (y2+y1)/(2)
                     #compare coordinates of centers
-                    if x_c_ref- 0.5 < x_c < x_c_ref + 0.5 : 
-                            if y_c_ref- 0.5 < y_c < y_c_ref + 0.5 :
+                    if x_c_ref- 6 < x_c < x_c_ref + 6 : 
+                            if y_c_ref- 6 < y_c < y_c_ref + 6 :
                                 #centers are too close : one and only one label must remain
                                 indlist.append(i)
                                 if elt[5] > lab[5] : #keep line with the most confidence
