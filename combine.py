@@ -34,9 +34,39 @@ step = (5,5)
 width = 50
 wstep = 10
 
+
+cam = cv2.VideoCapture(2) #camera
+
 ## detecting board
 
+def get_board(frame):
+    
+    if frame is None:
+        print("Image could not be loaded. Check your path.")
+        return
 
+    EXPECT = 24
+
+    # --- Detect outer rectangle (paper board) ---
+    outer_rect, edges = detect_outer_paper_rect(frame)
+    if outer_rect is None:
+        print("Could not detect board outline.")
+        return 0
+
+    # --- Rectify to square ---
+    rect, H = rectify_to_square(frame, outer_rect)
+    return rect
+
+def save_im(im, im_path):
+    try :
+        cv2.imwrite(im_path, im)
+        k = cv2.waitKey(30)
+        cv2.destroyAllWindows()
+    except:
+        print('could not save image')
+    return im_path
+
+## feeding to CNN
 def infer(onnx_path, img_path):
     """Run inference on one image."""
     model = load_model(onnx_path)
@@ -108,37 +138,6 @@ def infer(onnx_path, img_path):
         })
 
     return img_original, labels
-
-
-def get_board(image_path):
-    frame = cv2.imread(image_path)
-    if frame is None:
-        print("Image could not be loaded. Check your path.")
-        return
-
-    EXPECT = 24
-
-    # --- Detect outer rectangle (paper board) ---
-    outer_rect, edges = detect_outer_paper_rect(frame)
-    if outer_rect is None:
-        print("Could not detect board outline.")
-        return 0
-
-    # --- Rectify to square ---
-    rect, H = rectify_to_square(frame, outer_rect)
-    return rect
-
-def save_im(im, im_path):
-    try :
-        cv2.imwrite(im_path, im)
-        k = cv2.waitKey(30)
-        cv2.destroyAllWindows()
-    except:
-        print('could not save image')
-    return im_path
-
-##feeding board to CNN
-
 
 
 def store_class(results, res_path, filter = False):
@@ -224,6 +223,8 @@ def filter_nodes_class(res_path, im):
     store_class(new_lines, res_path, filter = True)
 
 
+
+## get list of white and black pieces from txt file of labels
 def sort(L, key):
     L.sort(key=key)
     return L
@@ -271,6 +272,8 @@ def pieces_list(res_path):
     print(w_pieces, b_pieces, empty)
     return w_pieces, b_pieces
 
+
+##draw result
 
 def draw_boxes_infer(img, results):
     """Draw boxes on the image."""
@@ -362,8 +365,26 @@ def test_yolo_label(image_path, label_path, class_names, resize, filtered = Fals
 
 
 
-def main(image_path, rect_path, res_path):
-    im = get_board(image_path)
+##performance metrics
+
+
+def nodes_list(w_pieces, b_pieces):
+    d_pieces = {"w", "b","e"}
+    # for i in range(24):
+
+def confusion_matrix(res_path, label_path):
+    for i in range(17,41) :
+        exp_w, exp_b = pieces_list(label_path)
+        res_w, res_b = pieces_list(res_path)
+        exp_empty =[]
+        # for i in range(24):
+        #     if i in exp
+
+
+##main
+def main(im, rect_path, res_path):
+    frame = cv2.imread(image_path)
+    im = get_board(frame)
     im_path = save_im(im, rect_path)
     img, lab = infer(model, rect_path)
     store_class(lab, res_path)
@@ -377,45 +398,36 @@ def main(image_path, rect_path, res_path):
     axes, corner = board(radius, origin, step, width, wstep)
     add_pieces(axes, corner, w_pieces, b_pieces)
 
+def main_cam(cam,rect_path, res_path):
+    ret, frame = cam.read()
+    im = get_board(frame)
+    im_path = save_im(im, rect_path)
+    img, lab = infer(model, rect_path)
+    store_class(lab, res_path)
     
+    filter_nodes_class(res_path, img)
+    res_im = test_yolo_label(rect_path, res_path, class_names, resize = True, filtered=False)
+    save_im(res_im, rect_path)
+    w_pieces, b_pieces = pieces_list(res_path)
+    print(w_pieces, b_pieces)
 
-##display output
+    # axes, corner = board(radius, origin, step, width, wstep)
+    # add_pieces(axes, corner, w_pieces, b_pieces)
+ 
 
 if __name__ == "__main__" :
-    for i in range(56,68):
-        beg = time.time()
-        image_path = f"training/dataset/train/images/pieces{i}.jpg"
-        rect_path = f"metrics/NewModelResults/rect{i}.jpg"
-        res_path = f"metrics/NewModelResults/labels/rect{i}.txt"
-        main(image_path, rect_path, res_path)
-        # im = get_board(image_path)
-        # # im = cv2.resize(im, None, fx = 0.4, fy = 0.4)
-        # # title = f"rectified board"
-        # # cv2.namedWindow(title)
-        # # while True:
-        # #     cv2.imshow(title,im)
-        # #     k = cv2.waitKey(30)
-        # #     if k == 113:
-        # #         break
-        # # cv2.destroyAllWindows()
-        # im_path = save_im(im, rect_path)
-        # img, lab = infer(model, rect_path)
-        # # print(lab)
-        # store_class(lab, res_path)
-        # # test_yolo_label(rect_path, res_path, class_names, resize = False, filtered=False)
-        # filter_nodes_class(res_path, img)
-        # res_im = test_yolo_label(rect_path, res_path, class_names, resize = True, filtered=False)
-        # save_im(res_im, rect_path)
-        # w_pieces, b_pieces = pieces_list(res_path)
-        # print(w_pieces, b_pieces)
-        # # test_yolo_label(rect_path,res_path,class_names, resize=True, filtered = False)
-        # # axes, corner = board(radius, origin, step, width, wstep)
-        # # add_pieces(axes, corner, w_pieces, b_pieces)
+    # for i in range(56,68):
+    beg = time.time()
+    image_path = f"metrics/images/IMG-20251210-WA0006.jpg"
+    rect_path = "metrics/images/rect06.jpg"
+    res_path = "metrics/labels/rect06.txt"
+    # rect_path = f"live/im/test.jpg"
+    # res_path = f"live/label/test.txt"
+    main(image_path, rect_path, res_path)
+    # main_cam(cam, rect_path, res_path)
 
-
-
-        end=time.time()
-        print('process time :', end-beg)
+    end=time.time()
+    print('process time :', end-beg)
 
 
     
