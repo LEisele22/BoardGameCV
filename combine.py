@@ -11,6 +11,7 @@ from morris_node_system import (
 from onnxtest import nms, load_model, preprocess
 import time
 from display import add_pieces, board
+from operator import add
 
 ##Image and variables
 
@@ -140,7 +141,7 @@ def infer(onnx_path, img_path):
     return img_original, labels
 
 
-def store_class(results, res_path, filter = False):
+def store_class(results, res_path, filter = False, lab = False):
     '''
     stores result of the CNN run on the rectified board 
     (class, coordinates of rectangle and confidence)
@@ -153,7 +154,10 @@ def store_class(results, res_path, filter = False):
         else :
             file = open(res_path, mode = 'a')
     for elt in results : 
-        line = str(elt[0]) + ' ' + str(elt[1]) + ' ' + str(elt[2]) + ' ' + str(elt[3]) + ' ' + str(elt[4]) +' ' + str(elt[5]) + '\n'
+        if lab : 
+            line = str(elt[0]) + ' ' + str(elt[1]) + ' ' + str(elt[2]) + ' ' + str(elt[3]) + ' ' + str(elt[4]) +'\n'
+        else :
+            line = str(elt[0]) + ' ' + str(elt[1]) + ' ' + str(elt[2]) + ' ' + str(elt[3]) + ' ' + str(elt[4]) +' ' + str(elt[5]) + '\n'
         file.write(line)
     file.close()
     
@@ -169,57 +173,49 @@ def filter_nodes_class(res_path, im):
     file = open(res_path)
     lines = file.read()
     lines = lines.splitlines()
-    print('nb of boxes : ', len(lines))
+    # print('nb of boxes : ', len(lines))
     lablist = []
     new_lines = []
-    for i in range(len(lines)) : 
-        parts = lines[i].strip().split()
+    for elt in lines : 
+        parts = elt.strip().split()
         lab = []
         lab.append(int(parts[0]))
-        x1, y1, x2, y2 = map(float, parts[1:5])
-        lab.append(x1)
-        lab.append(y1)
-        lab.append(x2)
-        lab.append(y2)
-        lab.append(float(parts[5]))
-        lablist.append(lab)
+        if lab[0] != 0 :
+            x1, y1, x2, y2 = map(float, parts[1:5])
+            lab.append(x1)
+            lab.append(y1)
+            lab.append(x2)
+            lab.append(y2)
+            lab.append(float(parts[5]))
+            lablist.append(lab)
     j =0
     indlist = [] #list of indices that were already compared
-    while j < len(lablist):
-        if lablist[j][0] != 0:
-            if j not in indlist : 
-                lab = lablist[j]
-                x1, y1, x2, y2 = lab[1:5]
-                x_c_ref = (x2+x1)/(2 * dim[1])
-                y_c_ref = (y2+y1)/(2 * dim[0])
-                for i in range(len(lablist)) :
-                    if i not in indlist :
-                        elt = lablist[i]
-                        x1, y1, x2, y2 = elt[1:5]
-                        x_c = (x2+x1)/(2 * dim[1])
-                        y_c = (y2+y1)/(2 * dim[0])
-                        #compare coordinates of centers
-                        if x_c_ref- 0.07< x_c < x_c_ref + 0.07 : 
-                                if y_c_ref- 0.07 < y_c < y_c_ref + 0.07 :
-                                    #centers are too close : one and only one label must remain
-                                    indlist.append(i)
-                                    if elt[5] > lab[5] : #keep line with the most confidence
-                                        lab = elt
-                new_lines.append(lab)
-        j += 1
+    for j in range(len(lablist)):
+
+        if j not in indlist : 
+            lab = lablist[j]
+            x1, y1, x2, y2 = lab[1:5]
+            x_c_ref = (x2+x1)/(2 * dim[1])
+            y_c_ref = (y2+y1)/(2 * dim[0])
+            for i in range(len(lablist)) :
+                if i not in indlist :
+                    elt = lablist[i]
+                    x1, y1, x2, y2 = elt[1:5]
+                    x_c = (x2+x1)/(2 * dim[1])
+                    y_c = (y2+y1)/(2 * dim[0])
+                    #compare coordinates of centers
+                    if x_c_ref- 0.07< x_c < x_c_ref + 0.07 : 
+                            if y_c_ref- 0.07 < y_c < y_c_ref + 0.07 :
+                                #centers are too close : one and only one label must remain
+                                indlist.append(i)
+                                if elt[5] > lab[5] : #keep line with the most confidence
+                                    lab = elt
+            new_lines.append(lab)
+ 
 
 
     file.close()
-    print('nb of boxes : ', len(new_lines))
-    # form_lines = []
-    # for elt in new_lines :
-    #     x_c, y_c, w, h = elt[1:5]
-    #     x2 = x_c - w/2
-    #     x1 = x_c + w/2
-    #     y2 = y_c - h/2
-    #     y1 = y_c + h/2
-
-    #     form_lines.append([elt[0], x1, y1, x2, y2, elt[5]])
+    # print('nb of boxes : ', len(new_lines))
     store_class(new_lines, res_path, filter = True)
 
 
@@ -229,7 +225,7 @@ def sort(L, key):
     L.sort(key=key)
     return L
 
-def pieces_list(res_path):
+def pieces_list(res_path, lab = False):
     '''
     From the results txt file, 
     gets the list of white figures and black figures with numbered nodes
@@ -250,14 +246,16 @@ def pieces_list(res_path):
         lab.append(y1)
         lab.append(x2)
         lab.append(y2)
-        lab.append(float(parts[5]))
+        if not lab : 
+            lab.append(float(parts[5]))
         lablist.append(lab) 
     #order them same as the corners
     lablist.sort(key = lambda elt: (elt[2]+elt[4])/2 , reverse = False)
     # lablist.sort(key = lambda elt: elt[1])
     sortedlab = []
     sortedlab = sort(lablist[0:3], key = lambda elt: (elt[1]+ elt[3])/2) + sort(lablist[3:6],  lambda elt: (elt[1]+ elt[3])/2) + sort(lablist[6:9],  lambda elt: (elt[1]+ elt[3])/2) +sort(lablist[9:15],  lambda elt: (elt[1]+ elt[3])/2) +sort(lablist[15:18],  lambda elt: (elt[1]+ elt[3])/2) +sort(lablist[18:21],  lambda elt: (elt[1]+ elt[3])/2) + sort(lablist[21:24],  lambda elt: (elt[1]+ elt[3])/2)
-    store_class(sortedlab,res_path, filter= True) 
+    
+    store_class(sortedlab,res_path, filter= True, lab = lab) 
     #get list of pieces
     w_pieces = []
     b_pieces = []
@@ -374,12 +372,48 @@ def nodes_list(w_pieces, b_pieces):
     # for i in range(24):
 
 def confusion_matrix(res_path, label_path):
-    for i in range(17,41) :
-        exp_w, exp_b = pieces_list(label_path)
-        res_w, res_b = pieces_list(res_path)
-        exp_empty =[]
-        # for i in range(24):
-        #     if i in exp
+    """
+    takes labeled txt file and results (filtered) text file 
+    returns the confusion matrix for this file
+    """
+    conf = [[0 for j in range(3)] for i in range(3)]
+
+    exp_w, exp_b = pieces_list(label_path, lab = True)
+    res_w, res_b = pieces_list(res_path)
+    exp_empty =[]
+    for i in range(24):
+        if i not in exp_w :
+            if i not in exp_b:
+                exp_empty.append(i)
+    res_empty =[]
+    for i in range(24):
+        if i not in res_w :
+            if i not in res_b:
+                res_empty.append(i)
+    #now check if pieces in res are well classified
+    for p in res_w :
+        if p in exp_w :
+            conf[0][0] += 1
+        if p in exp_b :
+            conf[0][1] += 1
+        if p in exp_empty :
+            conf[0][2] += 1
+    for p in res_b :
+        if p in exp_w :
+            conf[1][0] += 1
+        if p in exp_b :
+            conf[1][1] += 1
+        if p in exp_empty :
+            conf[1][2] += 1
+    for p in res_empty :
+        if p in exp_w :
+            conf[2][0] += 1
+        if p in exp_b :
+            conf[2][1] += 1
+        if p in exp_empty :
+            conf[2][2] += 1
+    return conf
+
 
 
 ##main
@@ -421,35 +455,40 @@ def main_cam(cam,rect_path, res_path):
         save_im(res_im, rect_path)
         w_pieces, b_pieces = pieces_list(res_path)
         print(w_pieces, b_pieces)
-        return res_im
+        
 
         # axes, corner = board(radius, origin, step, width, wstep)
         # add_pieces(axes, corner, w_pieces, b_pieces)
+        return res_im
  
 
 if __name__ == "__main__" :
-    # for i in range(56,68):
+
+    # rect_path = f"live/im/test.jpg"
+    # res_path = f"live/label/test.txt"
+    # # main(image_path, rect_path, res_path)
+    # while True :
+    #     beg = time.time()
+    #     rect_path = f"live/im/test{round(beg)}.jpg"
+    #     res_path = f"live/label/test{round(beg)}.txt"
+    #     im = main_cam(cam, rect_path, res_path)
+    #     cv2.imshow('board', im)
+    #     k = cv2.waitKey(1000)
+    #     if k == 113:
+    #         break
+    #     end=time.time()
+    #     print('process time :', end-beg)
+    #     # time.sleep(1)
     
-    # image_path = f"metrics/images/IMG-20251210-WA0006.jpg"
-    # rect_path = "metrics/images/rect06.jpg"
-    # res_path = "metrics/labels/rect06.txt"
-    rect_path = f"live/im/test.jpg"
-    res_path = f"live/label/test.txt"
-    # main(image_path, rect_path, res_path)
-    while True :
-        beg = time.time()
-        rect_path = f"live/im/test{round(beg)}.jpg"
-        res_path = f"live/label/test{round(beg)}.txt"
-        im = main_cam(cam, rect_path, res_path)
-        cv2.imshow('board', im)
-        k = cv2.waitKey(30)
-        if k == 113:
-            break
-        end=time.time()
-        print('process time :', end-beg)
-        # time.sleep(1)
-    
-    cv2.destroyAllWindows()
-    cam.release()
+    # cv2.destroyAllWindows()
+    # cam.release()
+    # conf_mat = [[0 for j in range(3)] for i in range(3)]
+    for i in range(56,68):
+        lab_path = f"training/dataset/train/labels/pieces{i}.txt"
+        res_path = f"metrics/NewModelResults/labels/rect{i}.txt"
+        mat = confusion_matrix(res_path , lab_path)
+        # conf_mat = list(map(add, mat, conf_mat))
+        print(mat)
+    # print(conf_mat)
 
     
