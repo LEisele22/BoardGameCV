@@ -16,7 +16,7 @@ from onnxtest import nms, load_model, preprocess
 image_path = "metrics/images/IMG-20251207-WA0041.jpg"
 rect_path = "metrics/images/rect41.jpg"
 res_path = "metrics/labels/rect41.txt"
-model = "models/best.onnx"
+model = "models/best1.onnx"
 CLASSES = ['board', 'whitefigure', 'blackfigure', 'emptyspot']
 INPUT_SIZE = 640  # same as training
 CONF_THRESHOLD = 0.3
