@@ -70,9 +70,9 @@ def save_im(im, im_path):
 ## feeding to CNN
 
 
-def preprocess(img):
+def preprocess(img_path):
     """Prepare input image."""
-    # img = cv2.imread(img_path)
+    img = cv2.imread(img_path)
     if img is None:
         raise FileNotFoundError(f"Image not found:")
 
@@ -85,10 +85,10 @@ def preprocess(img):
 
     return img, img_input, scale, pad_w, pad_h
 
-def infer(onnx_path, img):
+def infer(onnx_path, img_path):
     """Run inference on one image."""
     model = load_model(onnx_path)
-    img_original, img_input, scale, pad_w, pad_h = preprocess(img)
+    img_original, img_input, scale, pad_w, pad_h = preprocess(img_path)
 
     output = model.run(None, {model.get_inputs()[0].name: img_input})[0]
     preds = np.squeeze(output)
@@ -398,6 +398,9 @@ def confusion_matrix(res_path, label_path):
     exp_w, exp_b = pieces_list(label_path, lab = True)
     res_w, res_b = pieces_list(res_path)
     exp_empty =[]
+    if len(res_w)==0 and len(res_b)==0 :
+        print('not enough nodes')
+        return 0 
     for i in range(24):
         if i not in exp_w :
             if i not in exp_b:
@@ -431,74 +434,91 @@ def confusion_matrix(res_path, label_path):
             conf[2][2] += 1
     return conf
 
+## multiprocessing
 
+def plot(w_pieces, b_pieces):
+    axes, corner = board(radius, origin, step, width, wstep)
+    add_pieces(axes, corner, w_pieces, b_pieces)
 
 ##main
-def main(im, rect_path, res_path):
+def main(image_path, rect_path, res_path):
     frame = cv2.imread(image_path)
     im = get_board(frame)
     im_path = save_im(im, rect_path)
-    img, lab = infer(model, im)
+    img, lab = infer(model, im_path)
     store_class(lab, res_path)
     
     filter_nodes_class(res_path, img)
-    res_im = test_yolo_label(rect_path, res_path, class_names, resize = True, filtered=False)
+    res_im = test_yolo_label(rect_path, res_path, class_names, resize = False, filtered=False)
     save_im(res_im, rect_path)
     w_pieces, b_pieces = pieces_list(res_path)
     print(w_pieces, b_pieces)
 
-    axes, corner = board(radius, origin, step, width, wstep)
-    add_pieces(axes, corner, w_pieces, b_pieces)
+    # axes, corner = board(radius, origin, step, width, wstep)
+    # add_pieces(axes, corner, w_pieces, b_pieces)
 
 def main_cam(cam,rect_path, res_path):
-    ret, frame = cam.read()
-    # cv2.imshow('feed', frame)
-    # cv2.waitKey(0)
-    im = get_board(frame)
-    
-       
-    if type(im) == type(0) :
-        print('no board')
-        return frame
-    else :
-          
-        im_path = save_im(im, rect_path)
-        img, lab = infer(model, im)
-        store_class(lab, res_path)
-        
-        filter_nodes_class(res_path, img)
-        res_im = test_yolo_label(rect_path, res_path, class_names, resize = False, filtered=False)
-        # cv2.imshow('board', res_im)
-        save_im(res_im, rect_path)
-        w_pieces, b_pieces = pieces_list(res_path)
-        print(w_pieces, b_pieces)
-        
 
-        axes, corner = board(radius, origin, step, width, wstep)
-        add_pieces(axes, corner, w_pieces, b_pieces)
-        return res_im
- 
-
-if __name__ == "__main__" :
-
-    rect_path = f"live/im/test.jpg"
-    res_path = f"live/label/test.txt"
-    # main(image_path, rect_path, res_path)
     while True :
         beg = time.time()
         rect_path = f"live/im/test{round(beg)}.jpg"
         res_path = f"live/label/test{round(beg)}.txt"
-        im = main_cam(cam, rect_path, res_path)
+            
+        ret, frame = cam.read()
+        # cv2.imshow('feed', frame)
+        # cv2.waitKey(0)
+        im = get_board(frame)
+        
+        
+        if type(im) == type(0) :
+            print('no board')
+            im = frame
+        else :
+            
+            im_path = save_im(im, rect_path)
+            img, lab = infer(model, im_path)
+            store_class(lab, res_path)
+            
+            filter_nodes_class(res_path, img)
+            res_im = test_yolo_label(rect_path, res_path, class_names, resize = False, filtered=False)
+            # cv2.imshow('board', res_im)
+            save_im(res_im, rect_path)
+            w_pieces, b_pieces = pieces_list(res_path)
+            print(w_pieces, b_pieces)
+            im = res_im
+
+
         cv2.imshow('board', im)
         k = cv2.waitKey(500)
         if k == 113:
             break
         end=time.time()
         print('process time :', end-beg)
-        # time.sleep(1)
-    
+
     cv2.destroyAllWindows()
     cam.release()
+ 
+
+if __name__ == "__main__" :
+    image_path = "training/dataset/valid/images/IMG-20251210-WA0018_jpg.rf.a9bc7d4aadcf0dbdf7caf49122cf2265.jpg"
+    rect_path = f"live/im/test.jpg"
+    res_path = f"live/label/test.txt"
+    main_cam(cam, rect_path, res_path)
+    # while True :
+    #     beg = time.time()
+    #     rect_path = f"live/im/test{round(beg)}.jpg"
+    #     res_path = f"live/label/test{round(beg)}.txt"
+    #     im = main_cam(cam, rect_path, res_path)
+    #     cv2.imshow('board', im)
+    #     k = cv2.waitKey(500)
+    #     if k == 113:
+    #         break
+    #     end=time.time()
+    #     print('process time :', end-beg)
+    #     # time.sleep(1)
+    
+    # cv2.destroyAllWindows()
+    # cam.release()
     # conf_mat = [[0 for j in range(3)] for i in range(3)]
     # for i in range(56,68):
         # if 
