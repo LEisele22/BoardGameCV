@@ -337,7 +337,8 @@ def test_yolo_label(image_path, label_path, class_names, resize, filtered = Fals
             image = cv2.resize(image, None, fx = 0.4, fy = 0.4)
             newsize = np.shape(image)
         except :
-            pass
+            print('NO BOARD')
+            return 
     bboxes = []
     labels = []
 
@@ -359,8 +360,8 @@ def test_yolo_label(image_path, label_path, class_names, resize, filtered = Fals
         result = draw_boxes_filtered(image.copy(), labels)
     else : 
         result = draw_boxes_infer(image.copy(), labels)
-    cv2.imshow("Label Test", result)
-    cv2.waitKey(0)
+    # cv2.imshow("Label Test", result)
+    # cv2.waitKey(0)
     return result
 
 
@@ -400,34 +401,51 @@ def main(im, rect_path, res_path):
 
 def main_cam(cam,rect_path, res_path):
     ret, frame = cam.read()
+    cv2.imshow('feed', frame)
+    # cv2.waitKey(0)
     im = get_board(frame)
-    im_path = save_im(im, rect_path)
-    img, lab = infer(model, rect_path)
-    store_class(lab, res_path)
     
-    filter_nodes_class(res_path, img)
-    res_im = test_yolo_label(rect_path, res_path, class_names, resize = True, filtered=False)
-    save_im(res_im, rect_path)
-    w_pieces, b_pieces = pieces_list(res_path)
-    print(w_pieces, b_pieces)
+       
+    if type(im) == type(0) :
+        print('no board')
+    else :
+          
+        im_path = save_im(im, rect_path)
+        img, lab = infer(model, rect_path)
+        store_class(lab, res_path)
+        
+        filter_nodes_class(res_path, img)
+        res_im = test_yolo_label(rect_path, res_path, class_names, resize = False, filtered=False)
+        save_im(res_im, rect_path)
+        w_pieces, b_pieces = pieces_list(res_path)
+        print(w_pieces, b_pieces)
 
-    # axes, corner = board(radius, origin, step, width, wstep)
-    # add_pieces(axes, corner, w_pieces, b_pieces)
+        # axes, corner = board(radius, origin, step, width, wstep)
+        # add_pieces(axes, corner, w_pieces, b_pieces)
  
 
 if __name__ == "__main__" :
     # for i in range(56,68):
-    beg = time.time()
-    image_path = f"metrics/images/IMG-20251210-WA0006.jpg"
-    rect_path = "metrics/images/rect06.jpg"
-    res_path = "metrics/labels/rect06.txt"
-    # rect_path = f"live/im/test.jpg"
-    # res_path = f"live/label/test.txt"
-    main(image_path, rect_path, res_path)
-    # main_cam(cam, rect_path, res_path)
-
-    end=time.time()
-    print('process time :', end-beg)
-
+    
+    # image_path = f"metrics/images/IMG-20251210-WA0006.jpg"
+    # rect_path = "metrics/images/rect06.jpg"
+    # res_path = "metrics/labels/rect06.txt"
+    rect_path = f"live/im/test.jpg"
+    res_path = f"live/label/test.txt"
+    # main(image_path, rect_path, res_path)
+    while True :
+        beg = time.time()
+        rect_path = f"live/im/test{round(beg)}.jpg"
+        res_path = f"live/label/test{round(beg)}.txt"
+        main_cam(cam, rect_path, res_path)
+        k = cv2.waitKey(30)
+        if k == 113:
+            break
+        end=time.time()
+        print('process time :', end-beg)
+        # time.sleep(1)
+    
+    cv2.destroyAllWindows()
+    cam.release()
 
     
