@@ -8,7 +8,7 @@ from morris_node_system import (
     draw_graph,
     detect_all_stones
 )
-from onnxtest import nms, load_model, preprocess
+from onnxtest import nms, load_model, letterbox
 import time
 from display import add_pieces, board
 from operator import add
@@ -36,7 +36,7 @@ width = 50
 wstep = 10
 
 
-cam = cv2.VideoCapture(2) #camera
+cam = cv2.VideoCapture(1) #camera
 
 ## detecting board
 
@@ -68,10 +68,27 @@ def save_im(im, im_path):
     return im_path
 
 ## feeding to CNN
-def infer(onnx_path, img_path):
+
+
+def preprocess(img):
+    """Prepare input image."""
+    # img = cv2.imread(img_path)
+    if img is None:
+        raise FileNotFoundError(f"Image not found:")
+
+    img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    img_lb, scale, pad_w, pad_h = letterbox(img_rgb, INPUT_SIZE)
+
+    img_input = img_lb.astype(np.float32) / 255.0
+    img_input = np.transpose(img_input, (2, 0, 1))
+    img_input = np.expand_dims(img_input, 0)
+
+    return img, img_input, scale, pad_w, pad_h
+
+def infer(onnx_path, img):
     """Run inference on one image."""
     model = load_model(onnx_path)
-    img_original, img_input, scale, pad_w, pad_h = preprocess(img_path)
+    img_original, img_input, scale, pad_w, pad_h = preprocess(img)
 
     output = model.run(None, {model.get_inputs()[0].name: img_input})[0]
     preds = np.squeeze(output)
@@ -234,6 +251,10 @@ def pieces_list(res_path, lab = False):
     file = open(res_path, 'r')
     lines = file.read()
     lines = lines.splitlines()
+    #check if right number of nodes
+    if len(lines) != 24 :
+        print('wrong nb of nodes : ', len(lines))
+        return [],[]
     #get the labels in the right order
     lablist = []
     new_lines = []
@@ -291,7 +312,7 @@ def draw_boxes_infer(img, results):
     return img
 
 
-def draw_boxes_filtered(img, results):
+def draw_boxes_num(img, results):
     # color = [(0,255,0), (0,0,255), (255,0,0), (127,0,127)]
     i = 0
     for label in results:
@@ -355,7 +376,7 @@ def test_yolo_label(image_path, label_path, class_names, resize, filtered = Fals
             labels.append([label, x_c, y_c, w, h, float(parts[5])])
         
     if filtered :
-        result = draw_boxes_filtered(image.copy(), labels)
+        result = draw_boxes_num(image.copy(), labels)
     else : 
         result = draw_boxes_infer(image.copy(), labels)
     # cv2.imshow("Label Test", result)
@@ -366,10 +387,6 @@ def test_yolo_label(image_path, label_path, class_names, resize, filtered = Fals
 
 ##performance metrics
 
-
-def nodes_list(w_pieces, b_pieces):
-    d_pieces = {"w", "b","e"}
-    # for i in range(24):
 
 def confusion_matrix(res_path, label_path):
     """
@@ -421,7 +438,7 @@ def main(im, rect_path, res_path):
     frame = cv2.imread(image_path)
     im = get_board(frame)
     im_path = save_im(im, rect_path)
-    img, lab = infer(model, rect_path)
+    img, lab = infer(model, im)
     store_class(lab, res_path)
     
     filter_nodes_class(res_path, img)
@@ -446,7 +463,7 @@ def main_cam(cam,rect_path, res_path):
     else :
           
         im_path = save_im(im, rect_path)
-        img, lab = infer(model, rect_path)
+        img, lab = infer(model, im)
         store_class(lab, res_path)
         
         filter_nodes_class(res_path, img)
@@ -457,38 +474,39 @@ def main_cam(cam,rect_path, res_path):
         print(w_pieces, b_pieces)
         
 
-        # axes, corner = board(radius, origin, step, width, wstep)
-        # add_pieces(axes, corner, w_pieces, b_pieces)
+        axes, corner = board(radius, origin, step, width, wstep)
+        add_pieces(axes, corner, w_pieces, b_pieces)
         return res_im
  
 
 if __name__ == "__main__" :
 
-    # rect_path = f"live/im/test.jpg"
-    # res_path = f"live/label/test.txt"
-    # # main(image_path, rect_path, res_path)
-    # while True :
-    #     beg = time.time()
-    #     rect_path = f"live/im/test{round(beg)}.jpg"
-    #     res_path = f"live/label/test{round(beg)}.txt"
-    #     im = main_cam(cam, rect_path, res_path)
-    #     cv2.imshow('board', im)
-    #     k = cv2.waitKey(1000)
-    #     if k == 113:
-    #         break
-    #     end=time.time()
-    #     print('process time :', end-beg)
-    #     # time.sleep(1)
+    rect_path = f"live/im/test.jpg"
+    res_path = f"live/label/test.txt"
+    # main(image_path, rect_path, res_path)
+    while True :
+        beg = time.time()
+        rect_path = f"live/im/test{round(beg)}.jpg"
+        res_path = f"live/label/test{round(beg)}.txt"
+        im = main_cam(cam, rect_path, res_path)
+        cv2.imshow('board', im)
+        k = cv2.waitKey(500)
+        if k == 113:
+            break
+        end=time.time()
+        print('process time :', end-beg)
+        # time.sleep(1)
     
-    # cv2.destroyAllWindows()
-    # cam.release()
+    cv2.destroyAllWindows()
+    cam.release()
     # conf_mat = [[0 for j in range(3)] for i in range(3)]
-    for i in range(56,68):
-        lab_path = f"training/dataset/train/labels/pieces{i}.txt"
-        res_path = f"metrics/NewModelResults/labels/rect{i}.txt"
-        mat = confusion_matrix(res_path , lab_path)
-        # conf_mat = list(map(add, mat, conf_mat))
-        print(mat)
+    # for i in range(56,68):
+        # if 
+        #     lab_path = f"training/dataset/train/labels/pieces{i}.txt"
+        #     res_path = f"metrics/NewModelResults/labels/rect{i}.txt"
+        #     mat = confusion_matrix(res_path , lab_path)
+        #     # conf_mat = list(map(add, mat, conf_mat))
+        #     print(mat)
     # print(conf_mat)
 
     
