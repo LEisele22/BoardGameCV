@@ -401,13 +401,14 @@ def main(im, rect_path, res_path):
 
 def main_cam(cam,rect_path, res_path):
     ret, frame = cam.read()
-    cv2.imshow('feed', frame)
+    # cv2.imshow('feed', frame)
     # cv2.waitKey(0)
     im = get_board(frame)
     
        
     if type(im) == type(0) :
         print('no board')
+        return frame
     else :
           
         im_path = save_im(im, rect_path)
@@ -416,9 +417,11 @@ def main_cam(cam,rect_path, res_path):
         
         filter_nodes_class(res_path, img)
         res_im = test_yolo_label(rect_path, res_path, class_names, resize = False, filtered=False)
+        # cv2.imshow('board', res_im)
         save_im(res_im, rect_path)
         w_pieces, b_pieces = pieces_list(res_path)
         print(w_pieces, b_pieces)
+        return res_im
 
         # axes, corner = board(radius, origin, step, width, wstep)
         # add_pieces(axes, corner, w_pieces, b_pieces)
@@ -437,7 +440,8 @@ if __name__ == "__main__" :
         beg = time.time()
         rect_path = f"live/im/test{round(beg)}.jpg"
         res_path = f"live/label/test{round(beg)}.txt"
-        main_cam(cam, rect_path, res_path)
+        im = main_cam(cam, rect_path, res_path)
+        cv2.imshow('board', im)
         k = cv2.waitKey(30)
         if k == 113:
             break
