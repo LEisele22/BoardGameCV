@@ -147,7 +147,7 @@ def draw_boxes(img, results):
 
 
 onnx_model = "models/best1.onnx"
-img_path = "training/dataset/train/images/IMG-20251209-WA0007_jpg.rf.082730109e61cc1a14911c520e6ad6b4.jpg"
+img_path = "training/dataset/valid/images/IMG-20251210-WA0010_jpg.rf.fc6bdeb1ca423653ac72d80179cfb516.jpg"
 
 img, results = infer(onnx_model, img_path)
 
