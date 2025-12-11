@@ -131,7 +131,7 @@ def add_pieces(ax, corners, w_pieces, b_pieces):
     ax.get_xaxis().set_visible(False)
     ax.get_yaxis().set_visible(False)
     plt.axis('scaled')    
-    plt.show()    
+    
 
 
 def save_state(filename, w_pieces, b_pieces, step):
@@ -163,14 +163,14 @@ def extract_state(filename, step):
     if b_pieces == 'empty':
         b_pieces = []
     return w_pieces, b_pieces
-    
-# w_pieces = [1,7,15]
-# b_pieces = [3,4,14]
-# axes, corner = board(radius, origin, step, width, wstep)
-# add_pieces(axes, corner, w_pieces, b_pieces)
-# save_state('games/game01.txt', w_pieces, b_pieces, 0)
-w_pieces, b_pieces = extract_state('games/game01.txt',0)
-print(w_pieces, b_pieces)
-# axes, corner = board(radius, origin, step, width, wstep)
-# add_pieces(axes, corner, w_pieces, b_pieces)
-plt.close('all')
+if __name__ == '__main__':  
+    # w_pieces = [1,7,15]
+    # b_pieces = [3,4,14]
+    # axes, corner = board(radius, origin, step, width, wstep)
+    # add_pieces(axes, corner, w_pieces, b_pieces)
+    # save_state('games/game01.txt', w_pieces, b_pieces, 0)
+    w_pieces, b_pieces = extract_state('games/game01.txt',0)
+    print(w_pieces, b_pieces)
+    # axes, corner = board(radius, origin, step, width, wstep)
+    # add_pieces(axes, corner, w_pieces, b_pieces)
+    plt.close('all')

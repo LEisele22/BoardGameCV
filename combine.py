@@ -12,7 +12,9 @@ from onnxtest import nms, load_model, letterbox
 import time
 from display import add_pieces, board
 from operator import add
+from matplotlib import pyplot as plt
 
+import multiprocessing
 ##Image and variables
 
 # image_path = "metrics/images/IMG-20251207-WA0041.jpg"
@@ -242,7 +244,7 @@ def sort(L, key):
     L.sort(key=key)
     return L
 
-def pieces_list(res_path, lab = False):
+def pieces_list(res_path, last_state = ([],[]),lab = False):
     '''
     From the results txt file, 
     gets the list of white figures and black figures with numbered nodes
@@ -254,7 +256,7 @@ def pieces_list(res_path, lab = False):
     #check if right number of nodes
     if len(lines) != 24 :
         print('wrong nb of nodes : ', len(lines))
-        return [],[]
+        return last_state
     #get the labels in the right order
     lablist = []
     new_lines = []
@@ -432,20 +434,43 @@ def confusion_matrix(res_path, label_path):
             conf[2][1] += 1
         if p in exp_empty :
             conf[2][2] += 1
+    print(conf)
     return conf
+
+
+def precision(conf_mat):
+    pres= []
+    rec = []
+    f1 = []
+    for i in range(3):
+        pres.append(conf_mat[i][i]/(conf_mat[0][i] + conf_mat[1][i]+conf_mat[2][i]))
+        rec.append(conf_mat[i][i]/(conf_mat[i][0] + conf_mat[i][1]+conf_mat[i][2]))
+        f1.append(2*pres[i]*rec[i]/(pres[i]+rec[i]))
+    print('precision : ', pres)
+    print('recall', rec)
+    print('f1 :', f1)
 
 ## multiprocessing
 
-def plot(w_pieces, b_pieces):
+def plot(state):
+    # plt.close('all')
+    beg1 = time.time()
     axes, corner = board(radius, origin, step, width, wstep)
+    # add_pieces(axes, corner, w_pieces, b_pieces)
+
+    (w_pieces, b_pieces) = state
     add_pieces(axes, corner, w_pieces, b_pieces)
+    end1 = time.time()
+    print('time to plot :', end1-beg1)
+    plt.show(block=False)
+    plt.pause(1)
 
 ##main
 def main(image_path, rect_path, res_path):
     frame = cv2.imread(image_path)
     im = get_board(frame)
-    im_path = save_im(im, rect_path)
-    img, lab = infer(model, im_path)
+    rect_path = save_im(im, rect_path)
+    img, lab = infer(model, rect_path)
     store_class(lab, res_path)
     
     filter_nodes_class(res_path, img)
@@ -457,9 +482,21 @@ def main(image_path, rect_path, res_path):
     # axes, corner = board(radius, origin, step, width, wstep)
     # add_pieces(axes, corner, w_pieces, b_pieces)
 
+
+
 def main_cam(cam,rect_path, res_path):
+    state = ([],[])
+    # q.put(state)
+    ret, im = cam.read()
+
 
     while True :
+
+        cv2.imshow('board', im)
+        k = cv2.waitKey(400)
+        if k == 113:
+            break
+        
         beg = time.time()
         rect_path = f"live/im/test{round(beg)}.jpg"
         res_path = f"live/label/test{round(beg)}.txt"
@@ -483,50 +520,34 @@ def main_cam(cam,rect_path, res_path):
             res_im = test_yolo_label(rect_path, res_path, class_names, resize = False, filtered=False)
             # cv2.imshow('board', res_im)
             save_im(res_im, rect_path)
-            w_pieces, b_pieces = pieces_list(res_path)
+            w_pieces, b_pieces = pieces_list(res_path, state)
             print(w_pieces, b_pieces)
             im = res_im
+            if (w_pieces,b_pieces) != state :
+                state = (w_pieces, b_pieces)
+                # q.put(state)
+        plt.close('all')
+        plot(state)  
 
 
-        cv2.imshow('board', im)
-        k = cv2.waitKey(500)
-        if k == 113:
-            break
         end=time.time()
         print('process time :', end-beg)
+
+
 
     cv2.destroyAllWindows()
     cam.release()
  
 
 if __name__ == "__main__" :
-    image_path = "training/dataset/valid/images/IMG-20251210-WA0018_jpg.rf.a9bc7d4aadcf0dbdf7caf49122cf2265.jpg"
-    rect_path = f"live/im/test.jpg"
-    res_path = f"live/label/test.txt"
-    main_cam(cam, rect_path, res_path)
-    # while True :
-    #     beg = time.time()
-    #     rect_path = f"live/im/test{round(beg)}.jpg"
-    #     res_path = f"live/label/test{round(beg)}.txt"
-    #     im = main_cam(cam, rect_path, res_path)
-    #     cv2.imshow('board', im)
-    #     k = cv2.waitKey(500)
-    #     if k == 113:
-    #         break
-    #     end=time.time()
-    #     print('process time :', end-beg)
-    #     # time.sleep(1)
-    
-    # cv2.destroyAllWindows()
-    # cam.release()
-    # conf_mat = [[0 for j in range(3)] for i in range(3)]
-    # for i in range(56,68):
-        # if 
-        #     lab_path = f"training/dataset/train/labels/pieces{i}.txt"
-        #     res_path = f"metrics/NewModelResults/labels/rect{i}.txt"
-        #     mat = confusion_matrix(res_path , lab_path)
-        #     # conf_mat = list(map(add, mat, conf_mat))
-        #     print(mat)
-    # print(conf_mat)
 
-    
+    # for i in range(36,42):
+    #     beg = time.time()
+    #     image_path = f"metrics/images/IMG-20251207-WA00{i}.jpg"
+    #     rect_path = f"metrics/perf/valid{i}.jpg"
+    #     res_path = f"metrics/perf/valid{i}.txt"
+    #     main(image_path, rect_path, res_path)
+    #     mat = confusion_matrix(res_path=res_path, label_path=res_path)
+    #     precision(mat)
+    main_cam(cam, rect_path, res_path)
+
